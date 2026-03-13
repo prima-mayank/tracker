@@ -4,8 +4,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    setupFiles: ['./src/tests/setup.ts'],
-    include: ['src/tests/**/*.test.ts'],
+    // setup.ts (DB connect) only applies to integration tests
+    setupFiles: [],
+    include: ['src/tests/unit/**/*.test.ts'],
     coverage: {
       reporter: ['text', 'lcov'],
     },
