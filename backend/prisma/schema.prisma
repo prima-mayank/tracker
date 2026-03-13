@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  passwordHash    String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  trackedProducts TrackedProduct[]
+
+  @@index([email])
+}
+
+model Product {
+  id              String           @id @default(cuid())
+  title           String
+  normalizedTitle String
+  imageUrl        String?
+  category        String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  priceEntries    PriceEntry[]
+  trackedProducts TrackedProduct[]
+
+  @@index([normalizedTitle])
+  @@index([category])
+}
+
+model PriceEntry {
+  id           String   @id @default(cuid())
+  productId    String
+  source       String
+  price        Decimal  @db.Decimal(12, 2)
+  currency     String   @default("INR")
+  originalUrl  String
+  affiliateUrl String?
+  sellerName   String?
+  rating       Decimal? @db.Decimal(3, 2)
+  reviewCount  Int?
+  offerText    String?
+  isAvailable  Boolean  @default(true)
+  fetchedAt    DateTime @default(now())
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, source])
+  @@index([productId, fetchedAt])
+}
+
+model TrackedProduct {
+  id            String    @id @default(cuid())
+  userId        String
+  productId     String
+  targetPrice   Decimal?  @db.Decimal(12, 2)
+  lastAlertedAt DateTime?
+  lastCheckedAt DateTime?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId, isActive])
+  @@index([isActive, lastCheckedAt])
+}
